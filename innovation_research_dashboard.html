@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Innovation Research Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #10b981;
+            --accent-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --border-color: #334155;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: var(--gradient);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-container {
+            position: relative;
+            min-width: 300px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 0.5rem;
+            color: white;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+        }
+
+        .sidebar {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            height: fit-content;
+            border: 1px solid var(--border-color);
+            position: sticky;
+            top: 120px;
+        }
+
+        .filter-section {
+            margin-bottom: 2rem;
+        }
+
+        .filter-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .filter-group {
+            margin-bottom: 1rem;
+        }
+
+        .filter-label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .filter-select, .filter-range {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .filter-checkboxes {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+            transition: all 0.2s;
+        }
+
+        .checkbox-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            accent-color: var(--primary-color);
+        }
+
+        .checkbox-item label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .content-area {
+            min-height: 100vh;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 0.5rem 0.5rem 0 0;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .item-card {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+            border-color: var(--primary-color);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .item-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .item-category {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .item-details {
+            margin-bottom: 1rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .item-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tag {
+            padding: 0.25rem 0.5rem;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--secondary-color);
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            margin: 1rem;
+            border: 1px solid var(--border-color);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--dark-bg);
+            border-radius: 4px;
+            margin: 0.5rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--secondary-color);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .no-results-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .comparison-panel {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: var(--card-bg);
+            border-left: 1px solid var(--border-color);
+            transition: right 0.3s ease;
+            z-index: 1500;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .comparison-panel.open {
+            right: 0;
+        }
+
+        .comparison-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .comparison-count {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .sidebar {
+                position: static;
+                order: 2;
+            }
+            
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-container {
+                min-width: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .dashboard-stats {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+            
+            .items-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                margin: 0.5rem;
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">🚀 Innovation Research Dashboard</div>
+            <div class="header-actions">
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Search innovations..." id="globalSearch">
+                </div>
+                <button class="btn btn-primary" onclick="toggleComparison()">
+                    Compare <span class="comparison-count" id="compareCount">0</span>
+                </button>
+                <button class="btn btn-secondary" onclick="exportData()">Export</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="filter-section">
+                <h3 class="filter-title">🔍 Filters</h3>
+                
+                <div class="filter-group">
+                    <label class="filter-label">Category</label>
+                    <select class="filter-select" id="categoryFilter">
+                        <option value="">All Categories</option>
+                        <option value="game-development">Game Development</option>
+                        <option value="3d-modeling">3D Modeling</option>
+                        <option value="gamification">Gamification</option>
+                        <option value="learning">Learning Solutions</option>
+                        <option value="xr-vr-ar">XR/VR/AR</option>
+                        <option value="visual-arts">Visual Arts</option>
+                        <option value="hardware">Hardware/Devices</option>
+                        <option value="patents">Patents/IP</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Type</label>
+                    <div class="filter-checkboxes">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="typeApp" value="App">
+                            <label for="typeApp">App</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="typeTool" value="Tool">
+                            <label for="typeTool">Tool</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="typePlugin" value="Plugin">
+                            <label for="typePlugin">Plugin</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="typePlatform" value="Platform">
+                            <label for="typePlatform">Platform</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="typeDevice" value="Device">
+                            <label for="typeDevice">Device</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Target Market</label>
+                    <div class="filter-checkboxes">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="targetIndustry" value="Industry">
+                            <label for="targetIndustry">Industry</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="targetAcademia" value="Academia">
+                            <label for="targetAcademia">Academia</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="targetBoth" value="Both">
+                            <label for="targetBoth">Both</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Development Time</label>
+                    <select class="filter-select" id="devTimeFilter">
+                        <option value="">All Timeframes</option>
+                        <option value="quick">Quick (1-4 months)</option>
+                        <option value="medium">Medium (4-8 months)</option>
+                        <option value="extended">Extended (8+ months)</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Market Potential ($M)</label>
+                    <input type="range" class="filter-range" id="marketPotentialRange" min="0" max="1000" value="1000">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary);">
+                        <span>$0M</span>
+                        <span id="marketValue">$1000M+</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-secondary" onclick="clearFilters()" style="width: 100%; margin-top: 1rem;">
+                    Clear Filters
+                </button>
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+                <button class="tab" onclick="switchTab('browse')">🔍 Browse</button>
+                <button class="tab" onclick="switchTab('analytics')">📈 Analytics</button>
+                <button class="tab" onclick="switchTab('research')">📚 Research</button>
+            </div>
+
+            <div id="dashboard" class="tab-content active">
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalItems">1,500</div>
+                        <div class="stat-label">Total Innovations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="quickDevItems">685</div>
+                        <div class="stat-label">Quick Development</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="highValueItems">324</div>
+                        <div class="stat-label">High Market Value</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="patentableItems">456</div>
+                        <div class="stat-label">Patentable Innovations</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-card">
+                        <h3 class="chart-title">📊 Distribution by Category</h3>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3 class="chart-title">⏱️ Development Timeline</h3>
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-card">
+                        <h3 class="chart-title">💰 Market Potential Distribution</h3>
+                        <canvas id="marketChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3 class="chart-title">🎯 Target Markets</h3>
+                        <canvas id="targetChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="browse" class="tab-content">
+                <div class="loading" id="loadingIndicator">
+                    <div class="spinner"></div>
+                    Loading innovations...
+                </div>
+                <div class="items-grid" id="itemsGrid" style="display: none;"></div>
+                <div class="no-results" id="noResults" style="display: none;">
+                    <div class="no-results-icon">🔍</div>
+                    <h3>No innovations found</h3>
+                    <p>Try adjusting your filters or search terms</p>
+                </div>
+            </div>
+
+            <div id="analytics" class="tab-content">
+                <div class="chart-container">
+                    <div class="chart-card">
+                        <h3 class="chart-title">📈 Innovation Trends by Year</h3>
+                        <canvas id="trendsChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3 class="chart-title">🏆 Top Innovation Categories</h3>
+                        <canvas id="topCategoriesChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3 class="chart-title">💡 Copyright vs Patent Potential</h3>
+                    <canvas id="ipChart"></canvas>
+                </div>
+            </div>
+
+            <div id="research" class="tab-content">
+                <div class="chart-card">
+                    <h3 class="chart-title">🎓 Academic Research Value</h3>
+                    <div style="padding: 2rem;">
+                        <p style="margin-bottom: 1rem; color: var(--text-secondary);">Research opportunities by field:</p>
+                        <div style="display: grid; gap: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>AI & Machine Learning</span>
+                                <div style="flex: 1; margin: 0 1rem;">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 85%;"></div>
+                                    </div>
+                                </div>
+                                <span style="color: var(--secondary-color);">245 items</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Computer Graphics</span>
+                                <div style="flex: 1; margin: 0 1rem;">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 72%;"></div>
+                                    </div>
+                                </div>
+                                <span style="color: var(--secondary-color);">189 items</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Human-Computer Interaction</span>
+                                <div style="flex: 1; margin: 0 1rem;">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 68%;"></div>
+                                    </div>
+                                </div>
+                                <span style="color: var(--secondary-color);">167 items</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Educational Technology</span>
+                                <div style="flex: 1; margin: 0 1rem;">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 61%;"></div>
+                                    </div>
+                                </div>
+                                <span style="color: var(--secondary-color);">142 items</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Psychology & Behavior</span>
+                                <div style="flex: 1; margin: 0 1rem;">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 54%;"></div>
+                                    </div>
+                                </div>
+                                <span style="color: var(--secondary-color);">126 items</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for item details -->
+    <div class="modal" id="itemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Item Details</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison Panel -->
+    <div class="comparison-panel" id="comparisonPanel">
+        <div class="comparison-header">
+            <h3 class="comparison-title">Compare Items</h3>
+            <button class="close-btn" onclick="toggleComparison()">&times;</button>
+        </div>
+        <div id="comparisonContent">
+            <p style="color: var(--text-secondary); text-align: center; margin: 2rem 0;">
+                Select items to compare them side by side
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Sample comprehensive data structure combining all innovation data
+        const innovationData = [
+            // Game Development Tools
+            {
+                id: 1,
+                name: "PixelArt Sprite Generator",
+                category: "game-development",
+                type: "Tool",
+                target: "Industry",
+                devTime: "1-2 months",
+                devTimeCategory: "quick",
+                marketPotential: 50,
+                description: "AI-powered pixel art sprite creation with animation frame generation",
+                features: ["AI sprite generation", "Animation timeline", "Export formats"],
+                patentAreas: ["AI art generation algorithms", "Sprite optimization methods"],
+                copyrightFocus: ["Sprite generation systems", "Art creation frameworks"],
+                cost: "$8K-15K",
+                researchValue: "High",
+                tags: ["AI", "Art Generation", "Game Assets"]
+            },
+            {
+                id: 2,
+                name: "GameUI Builder Pro",
+                category: "game-development",
+                type: "Plugin",
+                target: "Industry",
+                devTime: "1-2 months",
+                devTimeCategory: "quick",
+                marketPotential: 75,
+                description: "Drag-and-drop game UI creation tool with responsive design and platform optimization",
+                features: ["Visual UI builder", "Responsive layouts", "Cross-platform export"],
+                patentAreas: ["UI layout algorithms", "Responsive design systems"],
+                copyrightFocus: ["UI framework implementations", "Design pattern libraries"],
+                cost: "$10K-20K",
+                researchValue: "Medium",
+                tags: ["UI/UX", "Game Development", "Visual Design"]
+            },
+            // 3D Modeling Tools
+            {
+                id: 3,
+                name: "QuickRig Auto-Rigging Assistant",
+                category: "3d-modeling",
+                type: "Plugin",
+                target: "Industry",
+                devTime: "3-4 weeks",
+                devTimeCategory: "quick",
+                marketPotential: 500,
+                description: "Automated rigging algorithms with bone prediction",
+                features: ["Skeleton detection", "Automatic weight painting", "IK chain generation"],
+                patentAreas: ["Automated rigging algorithms", "Bone prediction systems"],
+                copyrightFocus: ["Rigging frameworks", "Animation systems"],
+                cost: "$15K-30K",
+                researchValue: "High",
+                tags: ["3D Animation", "Automation", "Character Rigging"]
+            },
+            // XR/VR/AR
+            {
+                id: 4,
+                name: "ARSnapPlace Object Anchoring",
+                category: "xr-vr-ar",
+                type: "App",
+                target: "Industry",
+                devTime: "2-3 weeks",
+                devTimeCategory: "quick",
+                marketPotential: 800,
+                description: "Intelligent spatial anchoring with persistence",
+                features: ["ARCore/ARKit integration", "Spatial mapping", "Cloud anchors"],
+                patentAreas: ["Spatial anchoring algorithms", "Persistence methods"],
+                copyrightFocus: ["AR frameworks", "Spatial computing systems"],
+                cost: "$8K-15K",
+                researchValue: "Very High",
+                tags: ["Augmented Reality", "Spatial Computing", "Mobile"]
+            },
+            // Gamification
+            {
+                id: 5,
+                name: "PointsPlus Instant Rewards",
+                category: "gamification",
+                type: "Plugin",
+                target: "Industry",
+                devTime: "2-3 weeks",
+                devTimeCategory: "quick",
+                marketPotential: 2000,
+                description: "Dynamic point calculation algorithms with real-time behavior adjustment",
+                features: ["Point systems", "Behavior tracking", "Real-time analytics"],
+                patentAreas: ["Point calculation algorithms", "Behavior tracking systems"],
+                copyrightFocus: ["Gamification frameworks", "Analytics systems"],
+                cost: "$8K-15K",
+                researchValue: "High",
+                tags: ["Gamification", "User Engagement", "Analytics"]
+            },
+            // Learning Solutions
+            {
+                id: 6,
+                name: "QuizCraft Mobile",
+                category: "learning",
+                type: "App",
+                target: "Academia",
+                devTime: "1-2 months",
+                devTimeCategory: "quick",
+                marketPotential: 300,
+                description: "Gamified quiz creation tool with points, leaderboards, and instant feedback for K-12 classrooms",
+                features: ["Quiz builder", "Real-time scoring", "Badge system"],
+                patentAreas: ["Quiz generation algorithms", "Scoring systems"],
+                copyrightFocus: ["Educational frameworks", "Assessment systems"],
+                cost: "$5K-12K",
+                researchValue: "Medium",
+                tags: ["Education", "K-12", "Assessment"]
+            },
+            // Visual Arts
+            {
+                id: 7,
+                name: "ColorPalette Generator Pro",
+                category: "visual-arts",
+                type: "Plugin",
+                target: "Industry",
+                devTime: "1-2 months",
+                devTimeCategory: "quick",
+                marketPotential: 150,
+                description: "AI-powered color palette generator plugin for design software with mood-based suggestions",
+                features: ["Mood analysis", "Color harmony algorithms", "Export integration"],
+                patentAreas: ["Color harmony algorithms", "Mood-color mapping systems"],
+                copyrightFocus: ["Color analysis systems", "Design frameworks"],
+                cost: "$8K-15K",
+                researchValue: "Medium",
+                tags: ["Color Theory", "Design Tools", "AI"]
+            },
+            // Hardware/Devices
+            {
+                id: 8,
+                name: "Adaptive Gaming Sphere",
+                category: "hardware",
+                type: "Device",
+                target: "Industry",
+                devTime: "6-8 months",
+                devTimeCategory: "extended",
+                marketPotential: 400,
+                description: "Basketball-sized smart sphere with programmable haptic material",
+                features: ["Texture changing", "Autonomous movement", "Biometric reading", "Emotional AI"],
+                patentAreas: ["Haptic material technology", "Autonomous sphere movement"],
+                copyrightFocus: ["Haptic control systems", "Emotional response algorithms"],
+                cost: "$400-600",
+                researchValue: "Very High",
+                tags: ["Haptic Feedback", "Gaming Hardware", "AI"]
+            },
+            // Patents/IP
+            {
+                id: 9,
+                name: "Quantum-Entangled Gaming Network Protocol",
+                category: "patents",
+                type: "Patent",
+                target: "Both",
+                devTime: "5-7 years",
+                devTimeCategory: "extended",
+                marketPotential: 50000,
+                description: "Quantum communication for zero-latency gaming",
+                features: ["Quantum state synchronization", "Entanglement-based data encoding", "Quantum error correction"],
+                patentAreas: ["Quantum networking", "Gaming communication protocols"],
+                copyrightFocus: ["Quantum algorithms", "Network protocols"],
+                cost: "Research Level",
+                researchValue: "Revolutionary",
+                tags: ["Quantum Computing", "Networking", "Zero Latency"]
+            },
+            // Additional sample items for demonstration
+            ...Array.from({length: 40}, (_, i) => ({
+                id: 10 + i,
+                name: `Innovation ${10 + i}`,
+                category: ['game-development', '3d-modeling', 'gamification', 'learning', 'xr-vr-ar', 'visual-arts', 'hardware', 'patents'][i % 8],
+                type: ['App', 'Tool', 'Plugin', 'Platform', 'Device'][i % 5],
+                target: ['Industry', 'Academia', 'Both'][i % 3],
+                devTime: ['1-2 months', '3-4 months', '6+ months'][i % 3],
+                devTimeCategory: ['quick', 'medium', 'extended'][i % 3],
+                marketPotential: Math.floor(Math.random() * 1000) + 50,
+                description: `Sample innovation description ${10 + i}`,
+                features: [`Feature ${i+1}`, `Feature ${i+2}`, `Feature ${i+3}`],
+                patentAreas: [`Patent area ${i+1}`, `Patent area ${i+2}`],
+                copyrightFocus: [`Copyright focus ${i+1}`, `Copyright focus ${i+2}`],
+                cost: "$10K-30K",
+                researchValue: ['Low', 'Medium', 'High', 'Very High'][i % 4],
+                tags: [`Tag${i+1}`, `Tag${i+2}`, `Tag${i+3}`]
+            }))
+        ];
+
+        // Global state
+        let filteredData = [...innovationData];
+        let comparisonItems = [];
+        let charts = {};
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            loadItems();
+            setupEventListeners();
+            updateStats();
+            
+            // Simulate loading
+            setTimeout(() => {
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('itemsGrid').style.display = 'grid';
+            }, 1000);
+        });
+
+        function setupEventListeners() {
+            // Search functionality
+            document.getElementById('globalSearch').addEventListener('input', handleSearch);
+            
+            // Filter functionality
+            document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+            document.getElementById('devTimeFilter').addEventListener('change', applyFilters);
+            document.getElementById('marketPotentialRange').addEventListener('input', function() {
+                document.getElementById('marketValue').textContent = `$${this.value}M+`;
+                applyFilters();
+            });
+            
+            // Type checkboxes
+            ['typeApp', 'typeTool', 'typePlugin', 'typePlatform', 'typeDevice'].forEach(id => {
+                document.getElementById(id).addEventListener('change', applyFilters);
+            });
+            
+            // Target checkboxes
+            ['targetIndustry', 'targetAcademia', 'targetBoth'].forEach(id => {
+                document.getElementById(id).addEventListener('change', applyFilters);
+            });
+        }
+
+        function handleSearch(event) {
+            const searchTerm = event.target.value.toLowerCase();
+            filteredData = innovationData.filter(item => 
+                item.name.toLowerCase().includes(searchTerm) ||
+                item.description.toLowerCase().includes(searchTerm) ||
+                item.features.some(feature => feature.toLowerCase().includes(searchTerm)) ||
+                item.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+            );
+            loadItems();
+            updateStats();
+        }
+
+        function applyFilters() {
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const devTimeFilter = document.getElementById('devTimeFilter').value;
+            const marketPotential = parseInt(document.getElementById('marketPotentialRange').value);
+            
+            const typeFilters = ['typeApp', 'typeTool', 'typePlugin', 'typePlatform', 'typeDevice']
+                .filter(id => document.getElementById(id).checked)
+                .map(id => document.getElementById(id).value);
+            
+            const targetFilters = ['targetIndustry', 'targetAcademia', 'targetBoth']
+                .filter(id => document.getElementById(id).checked)
+                .map(id => document.getElementById(id).value);
+
+            filteredData = innovationData.filter(item => {
+                const categoryMatch = !categoryFilter || item.category === categoryFilter;
+                const devTimeMatch = !devTimeFilter || item.devTimeCategory === devTimeFilter;
+                const marketMatch = item.marketPotential >= marketPotential;
+                const typeMatch = typeFilters.length === 0 || typeFilters.includes(item.type);
+                const targetMatch = targetFilters.length === 0 || targetFilters.includes(item.target);
+                
+                return categoryMatch && devTimeMatch && marketMatch && typeMatch && targetMatch;
+            });
+
+            loadItems();
+            updateStats();
+        }
+
+        function clearFilters() {
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('devTimeFilter').value = '';
+            document.getElementById('marketPotentialRange').value = 1000;
+            document.getElementById('marketValue').textContent = '$1000M+';
+            
+            ['typeApp', 'typeTool', 'typePlugin', 'typePlatform', 'typeDevice', 
+             'targetIndustry', 'targetAcademia', 'targetBoth'].forEach(id => {
+                document.getElementById(id).checked = false;
+            });
+            
+            filteredData = [...innovationData];
+            loadItems();
+            updateStats();
+        }
+
+        function loadItems() {
+            const grid = document.getElementById('itemsGrid');
+            const noResults = document.getElementById('noResults');
+            
+            if (filteredData.length === 0) {
+                grid.style.display = 'none';
+                noResults.style.display = 'block';
+                return;
+            }
+            
+            grid.style.display = 'grid';
+            noResults.style.display = 'none';
+            
+            grid.innerHTML = filteredData.map(item => `
+                <div class="item-card" data-id="${item.id}">
+                    <div class="item-header">
+                        <div>
+                            <h3 class="item-title">${item.name}</h3>
+                            <span class="item-category">${formatCategoryName(item.category)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="item-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Type:</span>
+                            <span class="detail-value">${item.type}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Target:</span>
+                            <span class="detail-value">${item.target}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Dev Time:</span>
+                            <span class="detail-value">${item.devTime}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Market Potential:</span>
+                            <span class="detail-value">$${item.marketPotential}M+</span>
+                        </div>
+                    </div>
+                    
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem; line-height: 1.4;">
+                        ${item.description.length > 100 ? item.description.substring(0, 100) + '...' : item.description}
+                    </p>
+                    
+                    <div class="item-tags">
+                        ${item.tags.slice(0, 3).map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                    
+                    <div class="item-actions">
+                        <button class="btn btn-primary" onclick="viewDetails(${item.id})">View Details</button>
+                        <button class="btn btn-secondary" onclick="toggleCompare(${item.id})">${comparisonItems.includes(item.id) ? 'Remove' : 'Compare'}</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatCategoryName(category) {
+            const categoryNames = {
+                'game-development': 'Game Dev',
+                '3d-modeling': '3D Modeling',
+                'gamification': 'Gamification',
+                'learning': 'Learning',
+                'xr-vr-ar': 'XR/VR/AR',
+                'visual-arts': 'Visual Arts',
+                'hardware': 'Hardware',
+                'patents': 'Patents/IP'
+            };
+            return categoryNames[category] || category;
+        }
+
+        function updateStats() {
+            document.getElementById('totalItems').textContent = filteredData.length.toLocaleString();
+            document.getElementById('quickDevItems').textContent = filteredData.filter(item => item.devTimeCategory === 'quick').length;
+            document.getElementById('highValueItems').textContent = filteredData.filter(item => item.marketPotential >= 500).length;
+            document.getElementById('patentableItems').textContent = filteredData.filter(item => item.patentAreas.length > 0).length;
+        }
+
+        function initializeCharts() {
+            // Category Distribution Chart
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            const categoryData = getCategoryDistribution();
+            charts.category = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categoryData.labels,
+                    datasets: [{
+                        data: categoryData.values,
+                        backgroundColor: [
+                            '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
+                            '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#cbd5e1' }
+                        }
+                    }
+                }
+            });
+
+            // Timeline Chart
+            const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+            charts.timeline = new Chart(timelineCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Quick (1-4m)', 'Medium (4-8m)', 'Extended (8m+)'],
+                    datasets: [{
+                        data: [
+                            filteredData.filter(item => item.devTimeCategory === 'quick').length,
+                            filteredData.filter(item => item.devTimeCategory === 'medium').length,
+                            filteredData.filter(item => item.devTimeCategory === 'extended').length
+                        ],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#cbd5e1' },
+                            grid: { color: '#334155' }
+                        },
+                        x: {
+                            ticks: { color: '#cbd5e1' },
+                            grid: { color: '#334155' }
+                        }
+                    }
+                }
+            });
+
+            // Market Potential Chart
+            const marketCtx = document.getElementById('marketChart').getContext('2d');
+            charts.market = new Chart(marketCtx, {
+                type: 'line',
+                data: {
+                    labels: ['0-100M', '100-500M', '500M-1B', '1B-5B', '5B+'],
+                    datasets: [{
+                        label: 'Number of Items',
+                        data: [
+                            filteredData.filter(item => item.marketPotential < 100).length,
+                            filteredData.filter(item => item.marketPotential >= 100 && item.marketPotential < 500).length,
+                            filteredData.filter(item => item.marketPotential >= 500 && item.marketPotential < 1000).length,
+                            filteredData.filter(item => item.marketPotential >= 1000 && item.marketPotential < 5000).length,
+                            filteredData.filter(item => item.marketPotential >= 5000).length
+                        ],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#cbd5e1' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#cbd5e1' },
+                            grid: { color: '#334155' }
+                        },
+                        x: {
+                            ticks: { color: '#cbd5e1' },
+                            grid: { color: '#334155' }
+                        }
+                    }
+                }
+            });
+
+            // Target Market Chart
+            const targetCtx = document.getElementById('targetChart').getContext('2d');
+            charts.target = new Chart(targetCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Industry', 'Academia', 'Both'],
+                    datasets: [{
+                        data: [
+                            filteredData.filter(item => item.target === 'Industry').length,
+                            filteredData.filter(item => item.target === 'Academia').length,
+                            filteredData.filter(item => item.target === 'Both').length
+                        ],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#cbd5e1' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getCategoryDistribution() {
+            const categories = {};
+            filteredData.forEach(item => {
+                categories[item.category] = (categories[item.category] || 0) + 1;
+            });
+            
+            return {
+                labels: Object.keys(categories).map(formatCategoryName),
+                values: Object.values(categories)
+            };
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            
+            // Update charts if needed
+            if (tabName === 'dashboard') {
+                setTimeout(() => {
+                    Object.values(charts).forEach(chart => chart.resize());
+                }, 100);
+            }
+        }
+
+        function viewDetails(itemId) {
+            const item = innovationData.find(i => i.id === itemId);
+            if (!item) return;
+            
+            document.getElementById('modalTitle').textContent = item.name;
+            document.getElementById('modalBody').innerHTML = `
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;">📝 Description</h4>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">${item.description}</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;">📊 Details</h4>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <div class="detail-row">
+                                <span class="detail-label">Category:</span>
+                                <span class="detail-value">${formatCategoryName(item.category)}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Type:</span>
+                                <span class="detail-value">${item.type}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Target Market:</span>
+                                <span class="detail-value">${item.target}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Development Time:</span>
+                                <span class="detail-value">${item.devTime}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Estimated Cost:</span>
+                                <span class="detail-value">${item.cost}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Market Potential:</span>
+                                <span class="detail-value">$${item.marketPotential}M+</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Research Value:</span>
+                                <span class="detail-value">${item.researchValue}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;">🔧 Key Features</h4>
+                        <ul style="color: var(--text-secondary); padding-left: 1rem;">
+                            ${item.features.map(feature => `<li style="margin-bottom: 0.25rem;">${feature}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;">🔒 Patent Areas</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        ${item.patentAreas.map(area => `<span class="tag" style="background: rgba(37, 99, 235, 0.2); color: var(--primary-color);">${area}</span>`).join('')}
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;">©️ Copyright Focus</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        ${item.copyrightFocus.map(focus => `<span class="tag" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-color);">${focus}</span>`).join('')}
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;">🏷️ Tags</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        ${item.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('itemModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('itemModal').classList.remove('show');
+        }
+
+        function toggleCompare(itemId) {
+            const index = comparisonItems.indexOf(itemId);
+            if (index > -1) {
+                comparisonItems.splice(index, 1);
+            } else {
+                if (comparisonItems.length < 5) {
+                    comparisonItems.push(itemId);
+                } else {
+                    alert('You can compare up to 5 items at a time');
+                    return;
+                }
+            }
+            
+            document.getElementById('compareCount').textContent = comparisonItems.length;
+            updateComparisonPanel();
+            loadItems(); // Refresh to update button states
+        }
+
+        function toggleComparison() {
+            const panel = document.getElementById('comparisonPanel');
+            panel.classList.toggle('open');
+            updateComparisonPanel();
+        }
+
+        function updateComparisonPanel() {
+            const content = document.getElementById('comparisonContent');
+            
+            if (comparisonItems.length === 0) {
+                content.innerHTML = `
+                    <p style="color: var(--text-secondary); text-align: center; margin: 2rem 0;">
+                        Select items to compare them side by side
+                    </p>
+                `;
+                return;
+            }
+            
+            const items = comparisonItems.map(id => innovationData.find(item => item.id === id));
+            
+            content.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    ${items.map(item => `
+                        <div style="background: var(--dark-bg); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                                <h4 style="color: var(--text-primary); font-size: 0.9rem; margin: 0;">${item.name}</h4>
+                                <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="toggleCompare(${item.id})">Remove</button>
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                <div>Type: ${item.type}</div>
+                                <div>Market: $${item.marketPotential}M+</div>
+                                <div>Dev Time: ${item.devTime}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <button class="btn btn-primary" style="width: 100%;" onclick="generateComparisonReport()">
+                        Generate Comparison Report
+                    </button>
+                </div>
+            `;
+        }
+
+        function generateComparisonReport() {
+            const items = comparisonItems.map(id => innovationData.find(item => item.id === id));
+            
+            // This would generate a detailed comparison report
+            alert(`Comparison report for ${items.length} items would be generated here. This feature would export a detailed analysis comparing all selected innovations across various metrics.`);
+        }
+
+        function exportData() {
+            // This would export the current filtered data
+            const dataStr = JSON.stringify(filteredData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'innovation_data.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('itemModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
